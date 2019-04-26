@@ -12,6 +12,7 @@ import scrapy
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import Select
+from selenium.webdriver.common.by import By
 import time
 
 
@@ -39,22 +40,71 @@ class AreaSpiderMiddleware(object):
             return scrapy.http.HtmlResponse(url=request.url, body=page_source, encoding='utf-8', request=request)
 
 
-class StockSpiderMiddleware(object):
-    def __init__(self, timeout=None, service_args=[]):
-       #self.logger = getLogger(__name__)
-       self.timeout = timeout
+class SeleniumLogin(object):
+    login_urls = []
+    form_params = {}    # key: html_input_tag_xpath; value: html_input_tag_value
+    lognin_button_xpath = None
+    browser_headless = True
 
-       chrome_options = Options()
-       chrome_options.add_argument('--headless')  # 使用无头谷歌浏览器模式
-       chrome_options.add_argument('--disable-gpu')
-       chrome_options.add_argument('--no-sandbox')
-       self.browser = webdriver.Chrome(chrome_options=chrome_options)
-       self.browser.set_window_size(1400, 700)
-       #self.wait = WebDriverWait(self.browser, self.timeout)
+    def __init__(self, timeout=None, service_args=[]):
+        self.timeout = time
+        chrome_options = Options()
+        if self.browser_headless:
+            chrome_options.add_argument('--headless')  # 使用无头谷歌浏览器模式
+        self.browser = webdriver.Chrome(options=chrome_options)
+        self.browser.set_window_size(1400, 700)
 
     def __del__(self):
-       self.browser.quit()
+        #self.browser.quit()
+        pass
 
+    def process_request(self, request, spider):
+        if request.url not in self.login_urls:
+            return
+
+        #self.logger.debug('Selenium is starting')
+        try:
+            self.browser.get(request.url)
+
+            # 登录
+            for key, value in self.form_params.items():
+                self.browser.find_element(By.XPATH, key).send_keys(value)
+            self.browser.find_element(By.XPATH, self.lognin_button_xpath).click()
+
+            # 设置cookie
+            self.set_selenium_cookie_to_scrapy(request)
+
+            page_source = self.browser.page_source.encode('utf-8')
+            return scrapy.http.HtmlResponse(url=request.url, body=page_source, encoding='utf-8', request=request)
+        except TimeoutException:
+            return scrapy.http.HtmlResponse(url=request.url, status=500, request=request)
+
+    def set_selenium_cookie_to_scrapy(self, request):
+        selenium_cookies = self.browser.get_cookies()
+        new_cookie = []
+        for cookie_dict in selenium_cookies:
+            cookie = ''
+            for key, value in cookie_dict.items():
+                cookie += f'{key}={value}' if cookie == '' else f'; {key}={value}'
+            new_cookie.append(cookie.encode())
+            request.meta['cookies'] = cookie_dict
+            request.cookies = cookie_dict
+            return
+        #cookie = [f'{item["name"]}:{item["value"]}' for item in selenium_cookies]
+        request.cookies = new_cookie
+
+
+class LoginScrapyBook(SeleniumLogin):
+    login_urls = ['http://examples.scrapybook.com/post/nonce.php']
+    form_params = {
+        '//input[@name="user"]': 'user',
+        '//input[@name="pass"]': 'pass'
+    }
+    lognin_button_xpath = '//input[@name="commit"]'
+    browser_headless = False
+
+
+class DelayLoading(object):
     use_selenium_urls = [
         'https://cn.investing.com/equities/vietnam',
         'http://www.vgchartz.com/yearly/2014/Global/',
@@ -62,19 +112,73 @@ class StockSpiderMiddleware(object):
         'http://www.vgchartz.com/yearly/2016/Global/',
         'http://www.vgchartz.com/yearly/2017/Global/',
         'http://www.vgchartz.com/yearly/2018/Global/',
+        'https://www.teambition.com',
+        'https://www.teambition.com/organization/5c3fb994f081fc0001d52d5b',
+        'http://examples.scrapybook.com/post/data.php',
     ]
+
+    def __init__(self, timeout=None, service_args=[]):
+        self.timeout = time
+        chrome_options = Options()
+        #chrome_options.add_argument('--headless')  # 使用无头谷歌浏览器模式
+        self.browser = webdriver.Chrome(options=chrome_options)
+        self.browser.set_window_size(1400, 700)
+
+    def __del__(self):
+        #self.browser.quit()
+        pass
+
     def process_request(self, request, spider):
-        if request.url in self.use_selenium_urls:
-            #self.logger.debug('Selenium is starting')
-            try:
-                self.browser.get(request.url)
-                #time.sleep(10)
-                #selector = Select(self.browser.find_element_by_id('stocksFilter'))
-                #selector.select_by_index(0)
-                page_source = self.browser.page_source.encode('utf-8')
-                return scrapy.http.HtmlResponse(url=request.url, body=page_source, encoding='utf-8', request=request)
-            except TimeoutException:
-                return scrapy.http.HtmlResponse(url=request.url, status=500, request=request)
+        if request.url not in self.use_selenium_urls:
+            return
+
+        print(f'>>>>>>>>>> request.headers.cookie: {request.headers.getlist("Cookie")} <<<<<<<<<<')
+        print(f'>>>>>>>>>> request.cookie: {request.cookies} <<<<<<<<<<')
+        if 'cookiejar' in request.meta:
+            print(f'>>>>>>>>>> request.meta["cookiejar"]: {request.meta["cookiejar"]} <<<<<<<<<<')
+
+        self.set_scrapy_cookie_to_selenium(request)
+        #self.logger.debug('Selenium is starting')
+        try:
+            time.sleep(10)
+            print('获取哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈')
+            self.browser.get(request.url)
+            #time.sleep(10)
+            #selector = Select(self.browser.find_element_by_id('stocksFilter'))
+            #selector.select_by_index(0)
+            page_source = self.browser.page_source.encode('utf-8')
+            return scrapy.http.HtmlResponse(url=request.url, body=page_source, encoding='utf-8', request=request)
+        except TimeoutException:
+            return scrapy.http.HtmlResponse(url=request.url, status=500, request=request)
+
+    def set_selenium_cookie_to_scrapy(self, request):
+        seleniumCookies = self.browser.get_cookies()
+        cookie = [f'{item["name"]}:{item["value"]}' for item in seleniumCookies]
+        cookMap = {}
+        for elem in cookie:
+            str = elem.split(':')
+            cookMap[str[0]] = str[1]
+        request.cookies = cookMap
+
+    def set_scrapy_cookie_to_selenium(self, request):
+        scrapy_cookie = request.headers.getlist('Cookie')
+        new_cookie = {}
+        for cookie in scrapy_cookie:
+            cookie = cookie.decode()
+            cookie_items = cookie.split(';')
+            for cookie_item in cookie_items:
+                items = cookie_item.strip().split('=')
+                new_cookie[items[0].strip()] = items[1].strip()
+        #print('↓' * 20)
+        #print(new_cookie)
+        #self.browser.add_cookie(new_cookie)
+        #print(self.browser.get_cookies())
+        #print('↑' * 20)
+        print('获取哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈')
+        self.browser.get(request.url)
+        for key, value in new_cookie.items():
+            self.browser.add_cookie({'name':key, 'value':value})
+
 #\!===========
 
 

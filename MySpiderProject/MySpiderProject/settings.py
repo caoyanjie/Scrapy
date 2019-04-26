@@ -35,6 +35,7 @@ ROBOTSTXT_OBEY = False
 
 # Disable cookies (enabled by default)
 #COOKIES_ENABLED = False
+COOKIES_DEBUG = True
 
 # Disable Telnet Console (enabled by default)
 #TELNETCONSOLE_ENABLED = False
@@ -53,11 +54,11 @@ ROBOTSTXT_OBEY = False
 
 # Enable or disable downloader middlewares
 # See https://doc.scrapy.org/en/latest/topics/downloader-middleware.html
-DOWNLOADER_MIDDLEWARES = {
+#DOWNLOADER_MIDDLEWARES = {
 #    'MySpiderProject.middlewares.MyspiderprojectDownloaderMiddleware': 543,
 #    'MySpiderProject.middlewares.AreaSpiderMiddleware': 543,
-    'MySpiderProject.middlewares.StockSpiderMiddleware': 543,
-}
+#    'MySpiderProject.middlewares.StockSpiderMiddleware': 543,
+#}
 
 # Enable or disable extensions
 # See https://doc.scrapy.org/en/latest/topics/extensions.html
