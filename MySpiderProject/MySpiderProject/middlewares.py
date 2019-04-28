@@ -7,7 +7,6 @@
 
 from scrapy import signals
 
-#\!===========
 import scrapy
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -21,12 +20,11 @@ class AreaSpiderMiddleware(object):
        self.logger = getLogger(__name__)
        self.timeout = timeout
 
-       chrome_options = Options()
-       chrome_options.add_argument('--headless')  # 使用无头谷歌浏览器模式
-       chrome_options.add_argument('--disable-gpu')
-       chrome_options.add_argument('--no-sandbox')
-       self.browser = webdriver.Chrome(options=chrome_options)
-       self.browser.set_window_size(1400, 700)
+       browser_options = webdriver.FirefoxOptions()
+       browser_options.add_argument('--headless')  # 使用无头浏览器模式
+       browser_options.add_argument('--disable-gpu')
+       browser_options.add_argument('--no-sandbox')
+       self.browser = webdriver.Firefox(options=browser_options)
        self.wait = WebDriverWait(self.browser, self.timeout)
 
     def __del__(self):
@@ -40,6 +38,7 @@ class AreaSpiderMiddleware(object):
             return scrapy.http.HtmlResponse(url=request.url, body=page_source, encoding='utf-8', request=request)
 
 
+# \!################# login class basic ##################
 class SeleniumLogin(object):
     login_urls = []
     form_params = {}    # key: html_input_tag_xpath; value: html_input_tag_value
@@ -48,10 +47,10 @@ class SeleniumLogin(object):
 
     def __init__(self, timeout=None, service_args=[]):
         self.timeout = time
-        chrome_options = Options()
+        browser_options = webdriver.FirefoxOptions()
         if self.browser_headless:
-            chrome_options.add_argument('--headless')  # 使用无头谷歌浏览器模式
-        self.browser = webdriver.Chrome(options=chrome_options)
+            browser_options.add_argument('--headless')  # 使用无头浏览器模式
+        self.browser = webdriver.Firefox(options=browser_options)
 
     def __del__(self):
         self.browser.quit()
@@ -76,7 +75,6 @@ class SeleniumLogin(object):
             self.set_selenium_cookie_to_scrapy(request)
 
             page_source = self.browser.page_source.encode('utf-8')
-            self.browser.quit()
             return scrapy.http.HtmlResponse(url=request.url, body=page_source, encoding='utf-8', request=request)
         except TimeoutException:
             return scrapy.http.HtmlResponse(url=request.url, status=500, request=request)
@@ -89,6 +87,7 @@ class SeleniumLogin(object):
         request.cookies = new_cookies
 
 
+# \!################# login some website #################
 class LoginScrapyBook(SeleniumLogin):
     login_urls = ['http://examples.scrapybook.com/post/nonce.php']
     form_params = {
@@ -98,6 +97,7 @@ class LoginScrapyBook(SeleniumLogin):
     lognin_button_xpath = '//input[@name="commit"]'
 
 
+# \!############## delay loading to load javascript ###############
 class DelayLoading(object):
     use_selenium_urls = [
         'https://cn.investing.com/equities/vietnam',
@@ -172,8 +172,6 @@ class DelayLoading(object):
         self.browser.get(request.url)
         for key, value in new_cookie.items():
             self.browser.add_cookie({'name':key, 'value':value})
-
-#\!===========
 
 
 class MyspiderprojectSpiderMiddleware(object):
