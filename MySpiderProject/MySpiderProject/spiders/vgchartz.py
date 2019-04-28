@@ -14,7 +14,7 @@ class VgchartzSpider(scrapy.Spider):
         #'http://www.vgchartz.com/yearly/2018/Global/',
     ]
     custom_settings = {
-        'DOWNLOADER_MIDDLEWARES': {'MySpiderProject.middlewares.DelayLoading': 543},
+    #    'DOWNLOADER_MIDDLEWARES': {'MySpiderProject.middlewares.DelayLoading': 543},
         'ITEM_PIPELINES': {'MySpiderProject.pipelines.VgchartzPipeline': 300}
     }
 
@@ -29,9 +29,9 @@ class VgchartzSpider(scrapy.Spider):
                 int(data[0])
             except:
                 continue
-            item['pos'] = line.xpath('./td[1]/text()').extract()[0]
-            item['game'] = line.xpath('./td[2]/table/tbody/tr/td[2]/text()').extract()[0]
-            item['weeks'] = line.xpath('./td[3]/text()').extract()[0]
-            item['yearly'] = line.xpath('./td[4]/text()').extract()[0]
-            item['total'] = line.xpath('./td[5]/text()').extract()[0]
+            item['pos'] = line.xpath('./td[1]/text()').extract_first()
+            item['game'] = line.xpath('./td[2]/table/tbody/tr/td[2]/text()').extract_first()
+            item['weeks'] = line.xpath('./td[3]/text()').extract_first()
+            item['yearly'] = line.xpath('./td[4]/text()').extract_first()
+            item['total'] = line.xpath('./td[5]/text()').extract_first()
             yield item
