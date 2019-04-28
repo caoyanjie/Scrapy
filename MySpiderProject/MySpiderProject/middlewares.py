@@ -25,7 +25,7 @@ class AreaSpiderMiddleware(object):
        chrome_options.add_argument('--headless')  # 使用无头谷歌浏览器模式
        chrome_options.add_argument('--disable-gpu')
        chrome_options.add_argument('--no-sandbox')
-       self.browser = webdriver.Chrome(chrome_options=chrome_options)
+       self.browser = webdriver.Chrome(options=chrome_options)
        self.browser.set_window_size(1400, 700)
        self.wait = WebDriverWait(self.browser, self.timeout)
 
@@ -52,14 +52,13 @@ class SeleniumLogin(object):
         if self.browser_headless:
             chrome_options.add_argument('--headless')  # 使用无头谷歌浏览器模式
         self.browser = webdriver.Chrome(options=chrome_options)
-        self.browser.set_window_size(1400, 700)
 
     def __del__(self):
-        #self.browser.quit()
-        pass
+        self.browser.quit()
 
     def process_request(self, request, spider):
-        if request.url not in self.login_urls:
+        #use_selenium = request.meta.get('use_selenium', False)
+        if request.url not in self.login_urls:# or not use_selenium:
             return
 
         #self.logger.debug('Selenium is starting')
@@ -69,29 +68,25 @@ class SeleniumLogin(object):
             # 登录
             for key, value in self.form_params.items():
                 self.browser.find_element(By.XPATH, key).send_keys(value)
+                time.sleep(0.5)
             self.browser.find_element(By.XPATH, self.lognin_button_xpath).click()
+            time.sleep(1)
 
             # 设置cookie
             self.set_selenium_cookie_to_scrapy(request)
 
             page_source = self.browser.page_source.encode('utf-8')
+            self.browser.quit()
             return scrapy.http.HtmlResponse(url=request.url, body=page_source, encoding='utf-8', request=request)
         except TimeoutException:
             return scrapy.http.HtmlResponse(url=request.url, status=500, request=request)
 
     def set_selenium_cookie_to_scrapy(self, request):
         selenium_cookies = self.browser.get_cookies()
-        new_cookie = []
+        new_cookies = {}
         for cookie_dict in selenium_cookies:
-            cookie = ''
-            for key, value in cookie_dict.items():
-                cookie += f'{key}={value}' if cookie == '' else f'; {key}={value}'
-            new_cookie.append(cookie.encode())
-            request.meta['cookies'] = cookie_dict
-            request.cookies = cookie_dict
-            return
-        #cookie = [f'{item["name"]}:{item["value"]}' for item in selenium_cookies]
-        request.cookies = new_cookie
+            new_cookies[cookie_dict['name']] = cookie_dict['value']
+        request.cookies = new_cookies
 
 
 class LoginScrapyBook(SeleniumLogin):
@@ -101,7 +96,6 @@ class LoginScrapyBook(SeleniumLogin):
         '//input[@name="pass"]': 'pass'
     }
     lognin_button_xpath = '//input[@name="commit"]'
-    browser_headless = False
 
 
 class DelayLoading(object):
