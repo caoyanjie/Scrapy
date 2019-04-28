@@ -114,31 +114,21 @@ class DelayLoading(object):
 
     def __init__(self, timeout=None, service_args=[]):
         self.timeout = time
-        chrome_options = Options()
-        #chrome_options.add_argument('--headless')  # 使用无头谷歌浏览器模式
-        self.browser = webdriver.Chrome(options=chrome_options)
-        self.browser.set_window_size(1400, 700)
+        browser_options = webdriver.FirefoxOptions()
+        browser_options.add_argument('--headless')  # 使用无头浏览器模式
+        self.browser = webdriver.Firefox(options=browser_options, log_path=os.devnull)
 
     def __del__(self):
-        #self.browser.quit()
-        pass
+        self.browser.quit()
 
     def process_request(self, request, spider):
         if request.url not in self.use_selenium_urls:
             return
 
-        print(f'>>>>>>>>>> request.headers.cookie: {request.headers.getlist("Cookie")} <<<<<<<<<<')
-        print(f'>>>>>>>>>> request.cookie: {request.cookies} <<<<<<<<<<')
-        if 'cookiejar' in request.meta:
-            print(f'>>>>>>>>>> request.meta["cookiejar"]: {request.meta["cookiejar"]} <<<<<<<<<<')
-
-        self.set_scrapy_cookie_to_selenium(request)
-        #self.logger.debug('Selenium is starting')
+        #self.set_scrapy_cookie_to_selenium(request)
         try:
-            time.sleep(10)
-            print('获取哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈哈')
             self.browser.get(request.url)
-            #time.sleep(10)
+            time.sleep(1)
             #selector = Select(self.browser.find_element_by_id('stocksFilter'))
             #selector.select_by_index(0)
             page_source = self.browser.page_source.encode('utf-8')

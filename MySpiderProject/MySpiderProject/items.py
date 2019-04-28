@@ -48,8 +48,8 @@ class StockItem(scrapy.Item):
 
 
 class VgchartzItem(scrapy.Item):
-    Pos = scrapy.Field()
-    Game = scrapy.Field()
-    Weeks = scrapy.Field()
-    Yearly = scrapy.Field()
-    Total = scrapy.Field()
+    pos = scrapy.Field()
+    game = scrapy.Field()
+    weeks = scrapy.Field()
+    yearly = scrapy.Field()
+    total = scrapy.Field()
