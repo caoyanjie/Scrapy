@@ -63,7 +63,7 @@ class LoginSpider(scrapy.Spider):
         time.sleep(1)
         #return scrapy.Request(self.home_page_url, cookies=response.request.meta['cookies'], callback=self.check_login)
         return scrapy.Request(self.home_page_url, cookies=response.request.cookies, callback=self.check_login, dont_filter=True)
-        return scrapy.Request(self.home_page_url, callback=self.check_login, dont_filter=True)
+        #return scrapy.Request(self.home_page_url, callback=self.check_login, dont_filter=True)
 
     def check_login(self, response):
         print(f'>>>>>>>>>> login result:                    {response.xpath("//h1/text()").extract()}')
