@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import scrapy
+from scrapy.loader import ItemLoader
 from MySpiderProject.items import VgchartzItem
 
 
@@ -14,7 +15,7 @@ class VgchartzSpider(scrapy.Spider):
         #'http://www.vgchartz.com/yearly/2018/Global/',
     ]
     custom_settings = {
-    #    'DOWNLOADER_MIDDLEWARES': {'MySpiderProject.middlewares.DelayLoading': 543},
+        'DOWNLOADER_MIDDLEWARES': {'MySpiderProject.middlewares.DelayLoading': 543},
         'ITEM_PIPELINES': {'MySpiderProject.pipelines.VgchartzPipeline': 300}
     }
 
@@ -29,9 +30,18 @@ class VgchartzSpider(scrapy.Spider):
                 int(data[0])
             except:
                 continue
+            '''
             item['pos'] = line.xpath('./td[1]/text()').extract_first()
             item['game'] = line.xpath('./td[2]/table/tbody/tr/td[2]/text()').extract_first()
             item['weeks'] = line.xpath('./td[3]/text()').extract_first()
             item['yearly'] = line.xpath('./td[4]/text()').extract_first()
             item['total'] = line.xpath('./td[5]/text()').extract_first()
             yield item
+            '''
+            item_loader = ItemLoader(item=VgchartzItem(), selector=line)
+            item_loader.add_xpath('pos', './td[1]/text()')
+            item_loader.add_xpath('game', './td[2]/table/tbody/tr/td[2]/text()')
+            item_loader.add_xpath('weeks', './td[3]/text()')
+            item_loader.add_xpath('yearly', './td[4]/text()')
+            item_loader.add_xpath('total', './td[5]/text()')
+            yield item_loader.load_item()
