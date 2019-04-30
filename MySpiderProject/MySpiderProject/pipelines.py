@@ -34,10 +34,10 @@ class VgchartzPipeline(object):
         return item
 
     def insert_into_table(self, conn, item):
-        sql = f'''INSERT INTO vgchartzinfo(pos, game, weeks, yearly, total) 
-                  VALUES('{item["pos"]}',
-                         '{item["game"]}',
-                         '{item["weeks"]}',
-                         '{item["yearly"]}',
-                         '{item["total"]}')'''
+        sql = f'''INSERT INTO vgchartzinfo(pos, game, weeks, yearly, total)
+                  VALUES('{item.get("pos")}',
+                         '{item.get("game")}',
+                         '{item.get("weeks")}',
+                         '{item.get("yearly")}',
+                         '{item.get("total")}')'''
         conn.execute(sql)

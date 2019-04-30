@@ -6,6 +6,7 @@
 # https://doc.scrapy.org/en/latest/topics/items.html
 
 import scrapy
+from scrapy.loader.processors import TakeFirst
 
 
 class MyspiderprojectItem(scrapy.Item):
@@ -48,8 +49,19 @@ class StockItem(scrapy.Item):
 
 
 class VgchartzItem(scrapy.Item):
+    #default_input_processor = TakeFirst()
+    #default_output_processor = TakeFirst()
+
+    '''
     pos = scrapy.Field()
     game = scrapy.Field()
     weeks = scrapy.Field()
     yearly = scrapy.Field()
     total = scrapy.Field()
+    '''
+
+    pos = scrapy.Field(output_processor=TakeFirst())
+    game = scrapy.Field(output_processor=TakeFirst())
+    weeks = scrapy.Field(output_processor=TakeFirst())
+    yearly = scrapy.Field(output_processor=TakeFirst())
+    total = scrapy.Field(output_processor=TakeFirst())
